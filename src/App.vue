@@ -16,9 +16,33 @@ const categorySelected = ref('')
 function addNewCategory(category: { name: string, description: string | null, totalTimeSpend: number }) {
   categories.value.push(category);
 }
-function addNewTimeEntry(timeDetail: { type: string, name: string, duration: string, description: string, added: number }) {
-  recentTasks.value.push(timeDetail);
+function addNewTimeEntry(timeDetail: { type: string, name: string, duration: number, description: string, added: number }) {
+  let formattedTimeDetail = {...timeDetail, 'duration': convertSecondsToHuman(timeDetail.duration)}
+  recentTasks.value.push(formattedTimeDetail);
 }
+
+function convertHumanToSeconds(timeInStr: string): number | null{
+  const normalizedTimeStr = timeInStr.split(' ').join('')
+  var match = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(normalizedTimeStr);
+  if (match){
+    return 3600 * (parseInt(match[1]) || 0)
+      + 60 * (parseInt(match[2]) || 0)
+      + (parseInt(match[3]) || 0);
+    }
+  else {
+    return null
+  }
+}
+
+function convertSecondsToHuman(time: number): string {
+  let hours = ~~(time / 3600);
+  time = time % 3600
+  let minutes = ~~(time / 60)
+  // we don't need the seconds part
+  // time = time % 60
+  return `${hours}h ${minutes}m`
+}
+
 
 recentTasks.value = [
   {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, ref } from 'vue'
+import { ref, computed } from 'vue'
 
 
 const props = defineProps<{
@@ -8,15 +8,47 @@ const props = defineProps<{
 
 const taskName = ref('');
 const taskDescription = ref('')
-const taskDuration = ref('')
+const taskDurationRaw = ref('')
+
+const taskDuration = computed(() => {
+  return convertHumanToSeconds(taskDurationRaw.value)
+})
 // const preDefinedTimeDurations = ref(['15m', '30m', '1h', '2h'])
+
+
+function convertHumanToSeconds(timeInStr: string): number | null {
+  const normalizedTimeStr = timeInStr.split(' ').join('')
+  var match = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(normalizedTimeStr);
+  if (match) {
+    return 3600 * (parseInt(match[1]) || 0)
+      + 60 * (parseInt(match[2]) || 0)
+      + (parseInt(match[3]) || 0);
+  }
+  else {
+    return null
+  }
+}
+function convertSecondsToHuman(time: number): string {
+  let hours = ~~(time / 3600);
+  time = time % 3600
+  let minutes = ~~(time / 60)
+  // we don't need the seconds part
+  // time = time % 60
+  return `${hours}h ${minutes}m`
+}
+
 
 console.log('created')
 
 const emit = defineEmits < {
   (e: 'close-time-entry-modal'): void,
-  (e: 'time-added', timeDetail: {type: string, name: string, duration: string, description: string, added: number}): void
+  (e: 'time-added', timeDetail: {type: string, name: string, duration: number, description: string, added: number}): void
 }>()
+
+const vFocus = {
+  mounted: (el: HTMLElement) => el.focus()
+}
+
 
 </script>
 
@@ -108,6 +140,7 @@ const emit = defineEmits < {
                 v-model="taskName"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
                 placeholder="Meeting with George"
+                v-focus
                 required
               />
             </div>
@@ -121,38 +154,38 @@ const emit = defineEmits < {
                 type="text"
                 name="taskDuration"
                 id="taskDuration"
-                :value="taskDuration"
-                @input="(e) => {taskDuration = e.target.value}"
+                :value="taskDuration ? convertSecondsToHuman(taskDuration): ''"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
                 placeholder="1 hour"
                 required
+                readonly
               />
               <div class="inline-flex rounded-md shadow-sm" role="group">
                 <button
                   type="button"
                   class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-l-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white"
-                  @click="taskDuration = '15m'"
+                  @click="taskDurationRaw ='15m'"
                   >
                   15m
                 </button>
                 <button
                   type="button"
                   class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-r border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white"
-                  @click="taskDuration = '30m'"
+                  @click="taskDurationRaw = '30m'"
                   >
                   30m
                 </button>
                 <button
                   type="button"
                   class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-r border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white"
-                  @click="taskDuration = '1h'"
+                  @click="taskDurationRaw = '1h'"
                   >
                   1h
                 </button>
                 <button
                   type="button"
                   class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-r border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white"
-                  @click="taskDuration = '2h'"
+                  @click="taskDurationRaw = '2h'"
                   >
                   2h
                 </button>
@@ -162,9 +195,7 @@ const emit = defineEmits < {
                   id="customDuration"
                   class="px-4 w-full py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-r border-gray-200 rounded-r-md hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white"
                   placeholder="Custom (2h 30m)"
-                  :value="taskDuration"
-                  @input="(e) => { taskDuration = e.target.value }"
-                  required
+                  v-model="taskDurationRaw"
                 />
               </div>
             </div>
@@ -188,7 +219,7 @@ const emit = defineEmits < {
               class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               @click="emit('time-added', {
                 type: categorySelected, name: taskName, 
-                duration: taskDuration, description: taskDescription,
+                duration: taskDuration ? taskDuration : 0, description: taskDescription,
                 added: (new Date()).valueOf()}); emit('close-time-entry-modal')"
               >
               Add task
