@@ -1,0 +1,27 @@
+version: '3.0'
+
+services:
+  frontend:
+    build: 
+      dockerfile: DockerfileVue
+    expose:
+      - 3000
+    command: npx serve -s dist
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      dockerfile: DockerfileDjango
+    expose:
+      - 8000
+
+  reverse_proxy:
+    build: 
+      dockerfile: DockerfileNginx
+    ports:
+      - "8080:8080"
+    depends_on:
+      - frontend
+      - backend
+    # command: gunicorn better_time_logs.wsgi --bind 0.0.0.0

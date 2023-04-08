@@ -1,0 +1,11 @@
+FROM python:3.10.5
+
+COPY django-app /code
+
+WORKDIR /code
+
+RUN pip --no-cache-dir install -r requirements.txt
+
+WORKDIR /code/better_time_logs
+
+CMD gunicorn better_time_logs.wsgi --bind 0.0.0.0

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+
 import NavBar from './components/NavBar.vue'
 import CategoryView from './components/CategoryView.vue'
 import RecentTask from './components/RecentTasks.vue'
 import AddTask from './components/AddTask.vue'
 import AddCategory from './components/AddCategory.vue'
+
+const baseUrl = location.host
 
 const isAddTaskVisible = ref(false)
 const isAddCategoryVisible = ref(false)
@@ -93,23 +96,32 @@ recentTasks.value = [
   }
 ]
 
-categories.value = [
-  {
-    name: 'Meeting',
-    description: null,
-    totalTimeSpend: 102
-  },
-  {
-    name: 'Development',
-    description: null,
-    totalTimeSpend: 80
-  },
-  {
-    name: 'Development',
-    description: null,
-    totalTimeSpend: 80
+onMounted(() => {
+  console.log(baseUrl)
+  axios.get(`http://${baseUrl}/api/categories`).then(response => {
+    categories.value = response.data
   }
-]
+  )
+}
+)
+// )
+// categories.value = [
+//   {
+//     name: 'Meeting',
+//     description: null,
+//     totalTimeSpend: 102
+//   },
+//   {
+//     name: 'Development',
+//     description: null,
+//     totalTimeSpend: 80
+//   },
+//   {
+//     name: 'Development',
+//     description: null,
+//     totalTimeSpend: 80
+//   }
+// ]
 </script>
 
 <template>
