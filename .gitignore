@@ -30,3 +30,6 @@ coverage
 #python
 venv
 ./python-version
+
+# confidential
+.env

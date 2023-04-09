@@ -7,11 +7,14 @@ import CategoryView from './components/CategoryView.vue'
 import RecentTask from './components/RecentTasks.vue'
 import AddTask from './components/AddTask.vue'
 import AddCategory from './components/AddCategory.vue'
+import ShowAlerts from './components/ShowAlerts.vue'
 
 const baseUrl = location.host
 
 const isAddTaskVisible = ref(false)
 const isAddCategoryVisible = ref(false)
+const isAlertPageVisible = ref(false)
+const alertDetail = ref<{message: string, type:string}>()
 const recentTasks = ref(
   Array<{
     name: string
@@ -31,7 +34,11 @@ function addNewCategory(category: {
   description: string | null
   totalTimeSpend: number
 }) {
-  categories.value.push(category)
+  axios.post(
+    `http://${baseUrl}/api/categories/`, category
+  ).then((response) => {
+    response.status === 201 ? categories.value.push(category) : errorAlert("Failed to add category")
+  }, () => errorAlert("Failed to add task"))
 }
 function addNewTimeEntry(timeDetail: {
   type: string
@@ -41,7 +48,11 @@ function addNewTimeEntry(timeDetail: {
   added: number
 }) {
   let formattedTimeDetail = { ...timeDetail, duration: convertSecondsToHuman(timeDetail.duration) }
-  recentTasks.value.push(formattedTimeDetail)
+  axios.post(
+    `http://${baseUrl}/api/timelogs/`, timeDetail
+  ).then((response) => {
+    response.status === 201 ? recentTasks.value.push(formattedTimeDetail): errorAlert("Failed to add task")
+  }, ()=> errorAlert("Failed to add task"))
 }
 
 function convertHumanToSeconds(timeInStr: string): number | null {
@@ -65,43 +76,21 @@ function convertSecondsToHuman(time: number): string {
   return `${hours}h ${minutes}m`
 }
 
-recentTasks.value = [
-  {
-    name: 'Meeting with george',
-    type: 'Meeting',
-    duration: '1h',
-    added: 1680849349693,
-    description: null
-  },
-  {
-    name: 'Meeting with david',
-    type: 'Meeting',
-    duration: '2h',
-    added: 1680849340000,
-    description: null
-  },
-  {
-    name: 'Meeting with john',
-    type: 'Meeting',
-    duration: '1h',
-    added: 1680849345000,
-    description: null
-  },
-  {
-    name: 'Meeting with Jane',
-    type: 'Meeting',
-    duration: '1h',
-    added: new Date().valueOf(),
-    description: null
+function errorAlert(message: string) {
+  alertDetail.value = {
+    "message": message,
+    "type": "error"
   }
-]
-
+  isAlertPageVisible.value = true
+}
 onMounted(() => {
   console.log(baseUrl)
-  axios.get(`http://${baseUrl}/api/categories`).then(response => {
-    categories.value = response.data
-  }
-  )
+  axios.get(`http://${baseUrl}/api/categories/`).then(response => {
+    categories.value = categories.value.concat(response.data)
+  })
+  axios.get(`http://${baseUrl}/api/timelogs/`).then(response => {
+    recentTasks.value = recentTasks.value.concat(response.data)
+  })
 }
 )
 // )
@@ -148,6 +137,11 @@ onMounted(() => {
       @close-btn-clicked="isAddCategoryVisible = false"
       @add-new-category="addNewCategory"
     ></AddCategory>
+    <ShowAlerts 
+    v-if="isAlertPageVisible" :type="alertDetail?.type" :message="alertDetail?.message"
+    @close-btn-clicked="isAlertPageVisible = false"
+    >
+    </ShowAlerts>
   </div>
 </template>
 

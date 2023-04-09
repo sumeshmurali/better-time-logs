@@ -15,6 +15,7 @@ services:
       dockerfile: DockerfileDjango
     expose:
       - 8000
+    command: gunicorn better_time_logs.wsgi --bind 0.0.0.0
 
   reverse_proxy:
     build: 
@@ -24,4 +25,3 @@ services:
     depends_on:
       - frontend
       - backend
-    # command: gunicorn better_time_logs.wsgi --bind 0.0.0.0
